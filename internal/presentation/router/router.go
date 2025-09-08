@@ -19,6 +19,8 @@ func SetupQRCodeRoutes(r *gin.Engine, h *handler.QRCodeHandler) {
 
 	qr := v1.Group("/qr")
 	{
+		qr.GET("/:id", h.GetQRCodeById)
+		qr.GET("", h.GetAllQRCodes)
 		qr.POST("", h.AddQRCode)
 	}
 }

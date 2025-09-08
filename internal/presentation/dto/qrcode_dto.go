@@ -9,9 +9,9 @@ type CreateQRCodeRequest struct {
 }
 
 type QRCodeResponse struct {
-	ID        string     `json:"id"`
-	URL       string     `json:"url"`
-	Content   string     `json:"content"`
-	CreatedAt time.Time  `json:"created_at"`
-	ExpiresAt *time.Time `json:"expires_at"`
+	ID        string    `json:"id"`
+	URL       string    `json:"url"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 }

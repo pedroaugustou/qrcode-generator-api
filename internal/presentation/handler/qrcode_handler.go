@@ -17,19 +17,43 @@ func NewQRCodeHandler(useCase usecase.QRCodeUseCase) *QRCodeHandler {
 	return &QRCodeHandler{useCase: useCase}
 }
 
-func (h *QRCodeHandler) AddQRCode(ctx *gin.Context) {
+func (h *QRCodeHandler) GetAllQRCodes(c *gin.Context) {
+	qrcodes, err := h.useCase.GetAllQRCodes()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": qrcodes})
+}
+
+func (h *QRCodeHandler) GetQRCodeById(c *gin.Context) {
+	qrcode, err := h.useCase.GetQRCodeById(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if qrcode == nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "qr code not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": qrcode})
+}
+
+func (h *QRCodeHandler) AddQRCode(c *gin.Context) {
 	var req dto.CreateQRCodeRequest
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON: %v", err)})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON: %v", err)})
 		return
 	}
 
-	response, err := h.useCase.AddQRCode(&req)
+	r, err := h.useCase.AddQRCode(&req)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusCreated, gin.H{"data": r})
 }

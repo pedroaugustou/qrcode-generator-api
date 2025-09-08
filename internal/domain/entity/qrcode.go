@@ -11,7 +11,7 @@ type QRCode struct {
 	Content   string    `gorm:"not null" json:"content"`
 	URL       string    `gorm:"not null" json:"url"`
 	CreatedAt time.Time `json:"created_at"`
-	ExpiresAt time.Time `json:"expires_at,omitempty"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 func NewQRCode(content string) *QRCode {
