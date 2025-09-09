@@ -14,6 +14,7 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/qrcode-generator-api .
+COPY --from=builder /app/.env .
 
 EXPOSE 8080
 

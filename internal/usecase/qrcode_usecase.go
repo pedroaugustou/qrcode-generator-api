@@ -1,8 +1,10 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/entity"
@@ -15,45 +17,40 @@ import (
 )
 
 type QRCodeUseCase interface {
-	GetAllQRCodes() ([]dto.QRCodeResponse, error)
-	GetQRCodeById(id string) (*entity.QRCode, error)
-	AddQRCode(req *dto.CreateQRCodeRequest) (*dto.QRCodeResponse, error)
+	GetAllQRCodes(ctx context.Context) ([]dto.QRCodeResponse, error)
+	GetQRCodeById(ctx context.Context, id string) (*dto.QRCodeResponse, error)
+	AddQRCode(ctx context.Context, req *dto.QRCodeRequest) (*dto.QRCodeResponse, error)
+	DeleteQRCode(ctx context.Context, id string) error
 }
 
 type qrCodeUseCase struct {
-	r repository.QRCodeRepository
-	s service.StorageService
+	qrCodeRepository repository.QRCodeRepository
+	storageService   service.StorageService
 }
 
 func NewQRCodeUseCase(r repository.QRCodeRepository, s service.StorageService) QRCodeUseCase {
 	return &qrCodeUseCase{
-		r: r,
-		s: s,
+		qrCodeRepository: r,
+		storageService:   s,
 	}
 }
 
-func (q *qrCodeUseCase) GetAllQRCodes() ([]dto.QRCodeResponse, error) {
-	qrCodes, err := q.r.GetAllQRCodes()
+func (u *qrCodeUseCase) GetAllQRCodes(ctx context.Context) ([]dto.QRCodeResponse, error) {
+	qrCodes, err := u.qrCodeRepository.GetAllQRCodes(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	response := make([]dto.QRCodeResponse, len(qrCodes))
 	for i, qrCode := range qrCodes {
-		response[i] = dto.QRCodeResponse{
-			ID:        qrCode.ID,
-			URL:       qrCode.URL,
-			Content:   qrCode.Content,
-			CreatedAt: qrCode.CreatedAt,
-			ExpiresAt: qrCode.ExpiresAt,
-		}
+		response[i] = *entityToDTO(&qrCode)
 	}
 
 	return response, nil
 }
 
-func (u *qrCodeUseCase) GetQRCodeById(id string) (*entity.QRCode, error) {
-	qrCode, err := u.r.GetQRCodeById(id)
+func (u *qrCodeUseCase) GetQRCodeById(ctx context.Context, id string) (*dto.QRCodeResponse, error) {
+	qrCode, err := u.qrCodeRepository.GetQRCodeById(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -61,10 +58,10 @@ func (u *qrCodeUseCase) GetQRCodeById(id string) (*entity.QRCode, error) {
 		return nil, err
 	}
 
-	return qrCode, nil
+	return entityToDTO(qrCode), nil
 }
 
-func (q *qrCodeUseCase) AddQRCode(req *dto.CreateQRCodeRequest) (*dto.QRCodeResponse, error) {
+func (u *qrCodeUseCase) AddQRCode(ctx context.Context, req *dto.QRCodeRequest) (*dto.QRCodeResponse, error) {
 	var errs []string
 
 	if req.Content == nil {
@@ -89,30 +86,49 @@ func (q *qrCodeUseCase) AddQRCode(req *dto.CreateQRCodeRequest) (*dto.QRCodeResp
 		return nil, fmt.Errorf("validation failed: %s", strings.Join(errs, "; "))
 	}
 
-	qrCode := entity.NewQRCode(*req.Content)
+	qrCode := entity.NewQRCode(*req.Content, *req.Size, *req.RecoveryLevel)
 
 	png, err := goqrcode.Encode(*req.Content, goqrcode.RecoveryLevel(*req.RecoveryLevel), *req.Size)
 	if err != nil {
 		return nil, err
 	}
 
-	url, err := q.s.PutQRCode(png, qrCode)
+	url, err := u.storageService.PutQRCode(ctx, png, qrCode)
 	if err != nil {
 		return nil, err
 	}
 
 	qrCode.URL = url
 
-	err = q.r.AddQRCode(qrCode)
+	err = u.qrCodeRepository.AddQRCode(ctx, qrCode)
 	if err != nil {
 		return nil, err
 	}
 
+	return entityToDTO(qrCode), nil
+}
+
+func (u *qrCodeUseCase) DeleteQRCode(ctx context.Context, id string) error {
+	qrCode, err := u.qrCodeRepository.GetQRCodeById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := u.storageService.DeleteQRCode(ctx, qrCode.URL); err != nil {
+		log.Printf("failed to delete QR code file from storage: %v", err)
+	}
+
+	return u.qrCodeRepository.DeleteQRCode(ctx, id)
+}
+
+func entityToDTO(e *entity.QRCode) *dto.QRCodeResponse {
 	return &dto.QRCodeResponse{
-		ID:        qrCode.ID,
-		URL:       qrCode.URL,
-		Content:   qrCode.Content,
-		CreatedAt: qrCode.CreatedAt,
-		ExpiresAt: qrCode.ExpiresAt,
-	}, nil
+		ID:            e.ID,
+		URL:           e.URL,
+		Content:       e.Content,
+		Size:          e.Size,
+		RecoveryLevel: e.RecoveryLevel,
+		CreatedAt:     e.CreatedAt,
+		ExpiresAt:     e.ExpiresAt,
+	}
 }

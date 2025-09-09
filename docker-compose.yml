@@ -1,0 +1,18 @@
+services:
+  qrcode-generator-api:
+    build: .
+    container_name: qrcode-generator-api
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_SSL_MODE=${DB_SSL_MODE}
+      - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME}
+      - AZURE_STORAGE_ACCOUNT_KEY=${AZURE_STORAGE_ACCOUNT_KEY}
+      - AZURE_STORAGE_CONTAINER_NAME=${AZURE_STORAGE_CONTAINER_NAME}
+      - AZURE_STORAGE_ENDPOINT=${AZURE_STORAGE_ENDPOINT}
+    restart: unless-stopped
