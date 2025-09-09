@@ -3,13 +3,14 @@ package usecase
 import (
 	"errors"
 	"fmt"
-	"qrcode-generator-api/internal/domain/entity"
-	"qrcode-generator-api/internal/domain/service"
-	"qrcode-generator-api/internal/infrastructure/repository"
-	"qrcode-generator-api/internal/presentation/dto"
 	"strings"
 
+	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/entity"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/service"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/infrastructure/repository"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/presentation/dto"
 	goqrcode "github.com/skip2/go-qrcode"
+
 	"gorm.io/gorm"
 )
 
@@ -19,40 +20,40 @@ type QRCodeUseCase interface {
 	AddQRCode(req *dto.CreateQRCodeRequest) (*dto.QRCodeResponse, error)
 }
 
-type qrcodeUseCase struct {
+type qrCodeUseCase struct {
 	r repository.QRCodeRepository
 	s service.StorageService
 }
 
 func NewQRCodeUseCase(r repository.QRCodeRepository, s service.StorageService) QRCodeUseCase {
-	return &qrcodeUseCase{
+	return &qrCodeUseCase{
 		r: r,
 		s: s,
 	}
 }
 
-func (q *qrcodeUseCase) GetAllQRCodes() ([]dto.QRCodeResponse, error) {
-	qrcodes, err := q.r.GetAllQRCodes()
+func (q *qrCodeUseCase) GetAllQRCodes() ([]dto.QRCodeResponse, error) {
+	qrCodes, err := q.r.GetAllQRCodes()
 	if err != nil {
 		return nil, err
 	}
 
-	response := make([]dto.QRCodeResponse, len(qrcodes))
-	for i, qrcode := range qrcodes {
+	response := make([]dto.QRCodeResponse, len(qrCodes))
+	for i, qrCode := range qrCodes {
 		response[i] = dto.QRCodeResponse{
-			ID:        qrcode.ID,
-			URL:       qrcode.URL,
-			Content:   qrcode.Content,
-			CreatedAt: qrcode.CreatedAt,
-			ExpiresAt: qrcode.ExpiresAt,
+			ID:        qrCode.ID,
+			URL:       qrCode.URL,
+			Content:   qrCode.Content,
+			CreatedAt: qrCode.CreatedAt,
+			ExpiresAt: qrCode.ExpiresAt,
 		}
 	}
 
 	return response, nil
 }
 
-func (u *qrcodeUseCase) GetQRCodeById(id string) (*entity.QRCode, error) {
-	qrcode, err := u.r.GetQRCodeById(id)
+func (u *qrCodeUseCase) GetQRCodeById(id string) (*entity.QRCode, error) {
+	qrCode, err := u.r.GetQRCodeById(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -60,10 +61,10 @@ func (u *qrcodeUseCase) GetQRCodeById(id string) (*entity.QRCode, error) {
 		return nil, err
 	}
 
-	return qrcode, nil
+	return qrCode, nil
 }
 
-func (q *qrcodeUseCase) AddQRCode(req *dto.CreateQRCodeRequest) (*dto.QRCodeResponse, error) {
+func (q *qrCodeUseCase) AddQRCode(req *dto.CreateQRCodeRequest) (*dto.QRCodeResponse, error) {
 	var errs []string
 
 	if req.Content == nil {
@@ -88,30 +89,30 @@ func (q *qrcodeUseCase) AddQRCode(req *dto.CreateQRCodeRequest) (*dto.QRCodeResp
 		return nil, fmt.Errorf("validation failed: %s", strings.Join(errs, "; "))
 	}
 
-	qrcode := entity.NewQRCode(*req.Content)
+	qrCode := entity.NewQRCode(*req.Content)
 
 	png, err := goqrcode.Encode(*req.Content, goqrcode.RecoveryLevel(*req.RecoveryLevel), *req.Size)
 	if err != nil {
 		return nil, err
 	}
 
-	url, err := q.s.PutQRCode(png, qrcode)
+	url, err := q.s.PutQRCode(png, qrCode)
 	if err != nil {
 		return nil, err
 	}
 
-	qrcode.URL = url
+	qrCode.URL = url
 
-	err = q.r.AddQRCode(qrcode)
+	err = q.r.AddQRCode(qrCode)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.QRCodeResponse{
-		ID:        qrcode.ID,
-		URL:       qrcode.URL,
-		Content:   qrcode.Content,
-		CreatedAt: qrcode.CreatedAt,
-		ExpiresAt: qrcode.ExpiresAt,
+		ID:        qrCode.ID,
+		URL:       qrCode.URL,
+		Content:   qrCode.Content,
+		CreatedAt: qrCode.CreatedAt,
+		ExpiresAt: qrCode.ExpiresAt,
 	}, nil
 }

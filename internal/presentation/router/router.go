@@ -1,7 +1,7 @@
 package router
 
 import (
-	"qrcode-generator-api/internal/presentation/handler"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/presentation/handler"
 
 	"github.com/gin-gonic/gin"
 )

@@ -3,8 +3,9 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	"qrcode-generator-api/internal/presentation/dto"
-	"qrcode-generator-api/internal/usecase"
+
+	"github.com/pedroaugustou/qrcode-generator-api/internal/presentation/dto"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,27 +19,27 @@ func NewQRCodeHandler(useCase usecase.QRCodeUseCase) *QRCodeHandler {
 }
 
 func (h *QRCodeHandler) GetAllQRCodes(c *gin.Context) {
-	qrcodes, err := h.useCase.GetAllQRCodes()
+	qrCodes, err := h.useCase.GetAllQRCodes()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": qrcodes})
+	c.JSON(http.StatusOK, gin.H{"data": qrCodes})
 }
 
 func (h *QRCodeHandler) GetQRCodeById(c *gin.Context) {
-	qrcode, err := h.useCase.GetQRCodeById(c.Param("id"))
+	qrCode, err := h.useCase.GetQRCodeById(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if qrcode == nil {
+	if qrCode == nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "qr code not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": qrcode})
+	c.JSON(http.StatusOK, gin.H{"data": qrCode})
 }
 
 func (h *QRCodeHandler) AddQRCode(c *gin.Context) {

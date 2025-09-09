@@ -2,23 +2,23 @@ package main
 
 import (
 	"log"
-	"qrcode-generator-api/internal/domain/service"
-	"qrcode-generator-api/internal/infrastructure/database"
-	"qrcode-generator-api/internal/infrastructure/repository"
-	"qrcode-generator-api/internal/infrastructure/storage"
-	"qrcode-generator-api/internal/presentation/handler"
-	"qrcode-generator-api/internal/presentation/router"
-	"qrcode-generator-api/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/service"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/infrastructure/database"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/infrastructure/repository"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/infrastructure/storage"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/presentation/handler"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/presentation/router"
+	"github.com/pedroaugustou/qrcode-generator-api/internal/usecase"
 )
 
 func main() {
 	r := gin.Default()
 
 	// load environment variables
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,11 +34,11 @@ func main() {
 	}
 
 	// load storage service
-	minioConn, err := storage.NewMinIOConnection()
+	azureContainer, err := storage.NewAzureBlobConnection()
 	if err != nil {
 		log.Fatal(err)
 	}
-	storageService := service.NewStorageService(minioConn)
+	storageService := service.NewStorageService(azureContainer)
 
 	// load /qr
 	qrr := repository.NewQRCodeRepository(dbConn)
