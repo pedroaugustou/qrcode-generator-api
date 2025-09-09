@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/entity"
 	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/service"
 	"github.com/pedroaugustou/qrcode-generator-api/internal/infrastructure/repository"
 )
@@ -64,15 +65,56 @@ func (w *CleanupWorker) runCleanup(parentCtx context.Context) {
 
 	log.Println("starting cleanup process...")
 
-	if err := w.qrCodeRepository.DeleteExpiredQRCodes(ctx); err != nil {
-		log.Printf("failed to delete expired records: %v", err)
+	expiredQRCodes, err := w.getExpiredQRCodes(ctx)
+	if err != nil {
+		log.Printf("failed to get expired QR codes: %v", err)
 		return
 	}
 
-	if err := w.storageService.CleanupExpiredFiles(ctx); err != nil {
-		log.Printf("failed to cleanup expired files: %v", err)
+	if len(expiredQRCodes) == 0 {
+		log.Println("no expired QR codes found")
 		return
+	}
+
+	log.Printf("found %d expired QR codes to cleanup", len(expiredQRCodes))
+
+	for _, qrCode := range expiredQRCodes {
+		if err := w.deleteQRCode(ctx, qrCode); err != nil {
+			log.Printf("failed to delete QR code %s: %v", qrCode.ID, err)
+			continue
+		}
+		log.Printf("successfully deleted QR code: %s", qrCode.ID)
 	}
 
 	log.Println("cleanup process completed successfully")
+}
+
+func (w *CleanupWorker) getExpiredQRCodes(ctx context.Context) ([]entity.QRCode, error) {
+	allQRCodes, err := w.qrCodeRepository.GetAllQRCodes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC().Truncate(time.Hour)
+	var expiredQRCodes []entity.QRCode
+
+	for _, qrCode := range allQRCodes {
+		if qrCode.ExpiresAt.Before(now) || qrCode.ExpiresAt.Equal(now) {
+			expiredQRCodes = append(expiredQRCodes, qrCode)
+		}
+	}
+
+	return expiredQRCodes, nil
+}
+
+func (w *CleanupWorker) deleteQRCode(ctx context.Context, qrCode entity.QRCode) error {
+	if err := w.storageService.DeleteQRCode(ctx, qrCode.URL); err != nil {
+		return err
+	}
+
+	if err := w.qrCodeRepository.DeleteQRCode(ctx, qrCode.ID); err != nil {
+		return err
+	}
+
+	return nil
 }

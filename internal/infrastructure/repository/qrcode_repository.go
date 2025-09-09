@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/entity"
 
@@ -14,7 +13,6 @@ type QRCodeRepository interface {
 	GetQRCodeById(ctx context.Context, id string) (*entity.QRCode, error)
 	AddQRCode(ctx context.Context, qrCode *entity.QRCode) error
 	DeleteQRCode(ctx context.Context, id string) error
-	DeleteExpiredQRCodes(ctx context.Context) error
 }
 
 type qrCodeRepository struct {
@@ -50,9 +48,4 @@ func (q *qrCodeRepository) DeleteQRCode(ctx context.Context, id string) error {
 		return gorm.ErrRecordNotFound
 	}
 	return nil
-}
-
-func (q *qrCodeRepository) DeleteExpiredQRCodes(ctx context.Context) error {
-	now := time.Now().UTC().Truncate(time.Hour)
-	return q.database.WithContext(ctx).Where("expires_at <= ?", now).Delete(&entity.QRCode{}).Error
 }

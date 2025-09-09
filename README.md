@@ -97,7 +97,15 @@ The API provides the following endpoints for interacting with the QR Code genera
 }
 ```
 
-### 4. Check API status
+### 4. Delete a QR Code
+
+**DELETE** `/api/v1/qr/{id}`
+
+**Description:** Deletes a specific QR Code by its ID.
+
+**Response:** Status: `204 No Content`
+
+### 5. Check API status
 
 **GET** `/api/v1/ping`
 

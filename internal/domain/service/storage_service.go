@@ -3,10 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/entity"
@@ -15,15 +13,20 @@ import (
 type StorageService interface {
 	PutQRCode(ctx context.Context, png []byte, qrCode *entity.QRCode) (string, error)
 	DeleteQRCode(ctx context.Context, url string) error
-	CleanupExpiredFiles(ctx context.Context) error
 }
 
 type storageService struct {
-	containerURL azblob.ContainerURL
+	containerURL  azblob.ContainerURL
+	endpoint      string
+	containerName string
 }
 
 func NewStorageService(containerURL azblob.ContainerURL) StorageService {
-	return &storageService{containerURL: containerURL}
+	return &storageService{
+		containerURL:  containerURL,
+		endpoint:      os.Getenv("AZURE_STORAGE_ENDPOINT"),
+		containerName: os.Getenv("AZURE_STORAGE_CONTAINER_NAME"),
+	}
 }
 
 func (s *storageService) PutQRCode(ctx context.Context, png []byte, qrCode *entity.QRCode) (string, error) {
@@ -46,45 +49,11 @@ func (s *storageService) PutQRCode(ctx context.Context, png []byte, qrCode *enti
 		return "", fmt.Errorf("failed to upload blob: %w", err)
 	}
 
-	endpoint := os.Getenv("AZURE_STORAGE_ENDPOINT")
-	containerName := os.Getenv("AZURE_STORAGE_CONTAINER_NAME")
-
-	return fmt.Sprintf("%s/%s/%s", endpoint, containerName, blobName), nil
-}
-
-func (s *storageService) CleanupExpiredFiles(ctx context.Context) error {
-	now := time.Now().UTC().Truncate(time.Hour)
-
-	marker := azblob.Marker{}
-	for marker.NotDone() {
-		listBlob, err := s.containerURL.ListBlobsFlatSegment(ctx, marker, azblob.ListBlobsSegmentOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to list blobs: %w", err)
-		}
-
-		for _, blobInfo := range listBlob.Segment.BlobItems {
-			if blobInfo.Properties.LastModified.Before(now.Add(-24 * time.Hour)) {
-				blobURL := s.containerURL.NewBlockBlobURL(blobInfo.Name)
-				_, err := blobURL.Delete(ctx, azblob.DeleteSnapshotsOptionInclude, azblob.BlobAccessConditions{})
-				if err != nil {
-					log.Printf("failed to delete blob %s: %v", blobInfo.Name, err)
-					continue
-				}
-				log.Printf("deleted expired blob: %s", blobInfo.Name)
-			}
-		}
-
-		marker = listBlob.NextMarker
-	}
-
-	return nil
+	return fmt.Sprintf("%s/%s/%s", s.endpoint, s.containerName, blobName), nil
 }
 
 func (s *storageService) DeleteQRCode(ctx context.Context, url string) error {
-	endpoint := os.Getenv("AZURE_STORAGE_ENDPOINT")
-	containerName := os.Getenv("AZURE_STORAGE_CONTAINER_NAME")
-
-	prefix := fmt.Sprintf("%s/%s/", endpoint, containerName)
+	prefix := fmt.Sprintf("%s/%s/", s.endpoint, s.containerName)
 
 	if !strings.HasPrefix(url, prefix) {
 		return fmt.Errorf("invalid URL format: %s", url)
