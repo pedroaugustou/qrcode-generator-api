@@ -1,17 +1,14 @@
 # QR Code Generator API
 <p align="center">
-    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nginx/nginx-original.svg" alt="Nginx" width="40" height="40"/>
     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original-wordmark.svg" width="40" height="40" />
     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" width="40" height="40"/>
     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="Postgres" width="40" height="40"/>
-    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="Minio--Streamline-Simple-Icons" width="40" height="40">
+    <img src="https://img.icons8.com/?size=512&id=84280&format=png" alt="blobstorage" width="40" height="40"/>
 </p>
 
-This is my first Go API project. It provides a simple RESTful interface for generating QR codes.
+This is a simple RESTful interface for generating QR codes.
 
-## Design
-
-![design](assets/image.png)
+![alt text](image.png)
 
 ## Endpoints
 
@@ -43,8 +40,7 @@ The API provides the following endpoints for interacting with the QR Code genera
         "content": "https://example.com",
         "size": 256,
         "recovery_level": 3,
-        "created_at": "2025-09-08T12:00:00Z",
-        "expires_at": "2025-09-15T12:00:00Z"
+        "created_at": "2025-09-08T12:00:00Z"
     }
 }
 ```
@@ -68,7 +64,6 @@ The API provides the following endpoints for interacting with the QR Code genera
             "size": 256,
             "recovery_level": 3,
             "created_at": "2025-09-08T12:00:00Z",
-            "expires_at": "2025-09-15T12:00:00Z"
         }
     ]
 }
@@ -91,8 +86,7 @@ The API provides the following endpoints for interacting with the QR Code genera
         "content": "https://example.com",
         "size": 256,
         "recovery_level": 3,
-        "created_at": "2025-09-08T12:00:00Z",
-        "expires_at": "2025-09-15T12:00:00Z"
+        "created_at": "2025-09-08T12:00:00Z"
     }
 }
 ```
@@ -120,9 +114,3 @@ The API provides the following endpoints for interacting with the QR Code genera
 }
 ```
 
-## Background Worker
-
-The API includes a **cleanup worker** that runs automatically in the background. This worker performs the following tasks every hour:
-
-- **Database Cleanup**: Removes expired QR code records from PostgreSQL where `expires_at` is equal to or before the current hour
-- **Storage Cleanup**: Deletes expired QR code image files from Azure Blob Storage that are older than 24 hours

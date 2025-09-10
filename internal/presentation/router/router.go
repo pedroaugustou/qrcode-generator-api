@@ -12,8 +12,7 @@ func SetupQRCodeRoutes(r *gin.Engine, h *handler.QRCodeHandler) {
 
 	v1.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"code": "OK",
-			"data": "pong",
+			"message": "pong",
 		})
 	})
 

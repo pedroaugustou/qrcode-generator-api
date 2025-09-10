@@ -40,9 +40,5 @@ func main() {
 	// setup api routes
 	router.SetupQRCodeRoutes(r, qrh)
 
-	// load worker
-	// cleanupWorker := worker.NewCleanupWorker(storageService, qrr, time.Hour)
-	// cleanupWorker.Start()
-
 	r.Run(":8080")
 }

@@ -1,6 +1,10 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/pedroaugustou/qrcode-generator-api/internal/domain/entity"
+)
 
 type QRCodeRequest struct {
 	Content       *string `json:"content"`
@@ -15,5 +19,14 @@ type QRCodeResponse struct {
 	Size          int       `json:"size"`
 	RecoveryLevel int       `json:"recovery_level"`
 	CreatedAt     time.Time `json:"created_at"`
-	ExpiresAt     time.Time `json:"expires_at"`
+}
+
+func (q *QRCodeResponse) FromEntity(e *entity.QRCode) *QRCodeResponse {
+	q.ID = e.ID
+	q.URL = e.URL
+	q.Content = e.Content
+	q.Size = e.Size
+	q.RecoveryLevel = e.RecoveryLevel
+	q.CreatedAt = e.CreatedAt
+	return q
 }

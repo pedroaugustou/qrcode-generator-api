@@ -43,7 +43,7 @@ func (u *qrCodeUseCase) GetAllQRCodes(ctx context.Context) ([]dto.QRCodeResponse
 
 	response := make([]dto.QRCodeResponse, len(qrCodes))
 	for i, qrCode := range qrCodes {
-		response[i] = *entityToDTO(&qrCode)
+		response[i] = *(&dto.QRCodeResponse{}).FromEntity(&qrCode)
 	}
 
 	return response, nil
@@ -58,7 +58,7 @@ func (u *qrCodeUseCase) GetQRCodeById(ctx context.Context, id string) (*dto.QRCo
 		return nil, err
 	}
 
-	return entityToDTO(qrCode), nil
+	return (&dto.QRCodeResponse{}).FromEntity(qrCode), nil
 }
 
 func (u *qrCodeUseCase) AddQRCode(ctx context.Context, req *dto.QRCodeRequest) (*dto.QRCodeResponse, error) {
@@ -105,7 +105,7 @@ func (u *qrCodeUseCase) AddQRCode(ctx context.Context, req *dto.QRCodeRequest) (
 		return nil, err
 	}
 
-	return entityToDTO(qrCode), nil
+	return (&dto.QRCodeResponse{}).FromEntity(qrCode), nil
 }
 
 func (u *qrCodeUseCase) DeleteQRCode(ctx context.Context, id string) error {
@@ -119,16 +119,4 @@ func (u *qrCodeUseCase) DeleteQRCode(ctx context.Context, id string) error {
 	}
 
 	return u.qrCodeRepository.DeleteQRCode(ctx, id)
-}
-
-func entityToDTO(e *entity.QRCode) *dto.QRCodeResponse {
-	return &dto.QRCodeResponse{
-		ID:            e.ID,
-		URL:           e.URL,
-		Content:       e.Content,
-		Size:          e.Size,
-		RecoveryLevel: e.RecoveryLevel,
-		CreatedAt:     e.CreatedAt,
-		ExpiresAt:     e.ExpiresAt,
-	}
 }
