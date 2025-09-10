@@ -8,7 +8,7 @@
 
 This is a simple RESTful interface for generating QR codes.
 
-![alt text](image.png)
+![excalidraw](assets/image.png)
 
 ## Endpoints
 
